@@ -114,13 +114,13 @@ namespace ApertureLabsClocks
             Console.In.Read();
         }
 
-        static List<ShiftByDay> GetShiftsByDay(DateTime start, DateTime end)
+        static List<ShiftByDay> GetShiftsByDay(DateTime clockIn, DateTime clockOut)
         {
             List<ShiftByDay> outputList = new List<ShiftByDay>();
 
             // We need to count from the day before because Period 4 can go until 5 AM.
-            DateTime currentTime = new DateTime(start.Year, start.Month, start.Day, 5, 0, 0).AddDays(-1);
-            while (DateTime.Compare(currentTime, end) < 0) // currentDate < end
+            DateTime currentTime = new DateTime(clockIn.Year, clockIn.Month, clockIn.Day, 5, 0, 0).AddDays(-1);
+            while (DateTime.Compare(currentTime, clockOut) < 0) // currentDate < end
             {
                 ShiftByDay shift = new ShiftByDay();
                 shift.date = currentTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
@@ -128,10 +128,10 @@ namespace ApertureLabsClocks
                 // Time to calculate the periods.
                 DayPeriods day = new DayPeriods();
                 
-                day.period1 = CalculateNextPeriod(ref currentTime, start, end, 7); //  5 am + 7 = 12 pm
-                day.period2 = CalculateNextPeriod(ref currentTime, start, end, 6); // 12 pm + 6 =  6 pm
-                day.period3 = CalculateNextPeriod(ref currentTime, start, end, 5); //  6 pm + 5 = 11 pm
-                day.period4 = CalculateNextPeriod(ref currentTime, start, end, 6); // 11 pm + 6 =  5 am
+                day.period1 = CalculateNextPeriod(ref currentTime, clockIn, clockOut, 7); //  5 am + 7 = 12 pm
+                day.period2 = CalculateNextPeriod(ref currentTime, clockIn, clockOut, 6); // 12 pm + 6 =  6 pm
+                day.period3 = CalculateNextPeriod(ref currentTime, clockIn, clockOut, 5); //  6 pm + 5 = 11 pm
+                day.period4 = CalculateNextPeriod(ref currentTime, clockIn, clockOut, 6); // 11 pm + 6 =  5 am
 
                 // If this day has any hours, then add to our result set.
                 decimal total = day.period1 + day.period2 + day.period3 + day.period4;
@@ -146,22 +146,46 @@ namespace ApertureLabsClocks
             return outputList;
         }
 
-        static decimal CalculateNextPeriod(ref DateTime currentTime, DateTime startTime, DateTime endTime, double hourIncrement)
+        static decimal CalculateNextPeriod(ref DateTime currentTime, DateTime clockIn, DateTime clockOut, double hourIncrement)
         {
-            double hoursFromStart = startTime.Subtract(currentTime.AddHours(hourIncrement)).TotalHours;
-            if (hoursFromStart > 0)
-            {
-                // Here we have not reached the start time yet.
-                currentTime = currentTime.AddHours(hourIncrement);
-                return 0;
-            }
+            DateTime periodStart = currentTime;
+            DateTime periodEnd = currentTime.AddHours(hourIncrement);
 
-            double hoursFromEnd = endTime.Subtract(currentTime.AddHours(hourIncrement)).TotalHours;
-            // the max/min is for upper and lower bounds
-            decimal periodHours = Convert.ToDecimal(Math.Max(Math.Min(hoursFromEnd, hourIncrement), 0));
-            currentTime = currentTime.AddHours(hourIncrement);
+            /* Visual representation of combinations:
+             * s = period start
+             * e = period end
+             * [ = clock in
+             * ] = clock out
+             * _ = time counted
+             * 
+             * 1) s e [ ]   no hours
+             * 2) s [_e ]   period end - clock in           If the current period straddles the end time.
+             * 3) s [_] e   clock out - clock in            If the start and end times are both within this period.
+             * 4) [ s_] e   clock out - period start        If the current period straddles the start time.
+             * 5) [ s_e ]   period end - period start       All the hours in this period are clocked.
+             * 6) [ ] s e   no hours
+             * 
+             * We can see that the upper bound is the min(period end, clock out).
+             * Also the lower bound is the max(period start, clock in).
+            */
 
-            return Math.Round(periodHours, 1); // max 1 decimal place
+            DateTime end = Min(periodEnd, clockOut);
+            DateTime start = Max(periodStart, clockIn);
+
+            double workHours = Math.Max(0, end.Subtract(start).TotalHours);
+            
+            currentTime = periodEnd; /// increment time
+            return Math.Round(Convert.ToDecimal(workHours), 1); // round to 1 decimal place
+        }
+
+        static DateTime Min(DateTime d1, DateTime d2)
+        {
+            return DateTime.Compare(d1, d2) > 0 ? d2 : d1; // d1 is later
+        }
+
+        static DateTime Max(DateTime d1, DateTime d2)
+        {
+            return DateTime.Compare(d1, d2) > 0 ? d1 : d2; // d1 is later
         }
 
         static List<ShiftByDay> ConsolidateShifts(List<ShiftByDay> left, List<ShiftByDay> right)
@@ -170,7 +194,12 @@ namespace ApertureLabsClocks
 
             // Create the union of both left and right sets.
 
-            foreach(ShiftByDay day in right)
+            foreach (ShiftByDay day in left)
+            {
+                finalList.Add(day); // Start with the left list.
+            }
+
+            foreach (ShiftByDay day in right)
             {
                 ShiftByDay existingDay = finalList.Where(m => m.date == day.date).FirstOrDefault();
                 if (existingDay == null) // No merge required - just add the right entry.
