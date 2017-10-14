@@ -45,7 +45,7 @@ namespace ApertureLabsClocks
     {
         static void Main(string[] args)
         {
-            string filePath = "apertureLabsClocks.json";
+            string filePath = "..\\..\\apertureLabsClocks.json";
             if (!File.Exists(filePath))
             {
                 Console.Out.WriteLine("Put this in the same location as 'apertureLabsClocks.json'.");
@@ -106,8 +106,10 @@ namespace ApertureLabsClocks
             }
 
             string jsonOutput = JsonConvert.SerializeObject(shiftList, Formatting.Indented);
-            File.WriteAllText("output_HL.json", jsonOutput);
+            string outputFileName = "EmployeeShiftData.json";
+            File.WriteAllText(outputFileName, jsonOutput);
 
+            Console.Out.WriteLine("Output: " + outputFileName);
             Console.Out.WriteLine("Enter any key to exit.");
             Console.In.Read();
         }
