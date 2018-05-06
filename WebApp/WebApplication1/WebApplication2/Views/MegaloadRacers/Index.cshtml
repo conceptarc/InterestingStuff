@@ -1,0 +1,71 @@
+﻿@{
+    ViewBag.Title = "Megaload Racers";
+}
+
+<div id="MainInterface">
+    <h4>Setting up a new game:</h4>
+    <label>
+        Player count:
+        <br />
+        <input id="PlayerCount" class="wideInput rangeSlider" type="range" min="2" max="10" value="2" step="1" />
+        <br />
+        <input id="PlayerCountDisplay" class="wideInput" readonly />
+    </label>
+    <div id="MapSelection">
+        <br />
+        <div class="mediumPanel" mapId="1">
+            Map 1
+        </div>
+        <div class="mediumPanel" mapId="2">
+            Map 2
+        </div>
+        <div class="mediumPanel" mapId="3">
+            Map 3
+        </div>
+    </div>
+
+    <div id="ErrorMessage" style="color:red" hidden>Select a map.</div>
+    <input id="Start" type="button" value="Start" />
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#PlayerCountDisplay").val($("#PlayerCount").val());
+
+        $("#PlayerCount").on("change input", function () {
+            $("#PlayerCountDisplay").val($("#PlayerCount").val());
+        });
+
+        $(".mediumPanel").click(function () {
+            $(".mediumPanelSelected").removeClass("mediumPanelSelected");
+            $(this).addClass("mediumPanelSelected");
+        });
+
+        $("#Start").click(function () {
+            if ($(".mediumPanelSelected").length == 0) {
+                $("#ErrorMessage").show();
+                return;
+            }
+            $("#ErrorMessage").hide();
+            $("#OverlayLoadingScreen").show();
+            $("body").addClass("bodyLoading");
+
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                data: {
+                    playerCount: $("#PlayerCount").val(),
+                    mapId: $(".mediumPanelSelected").attr("mapId")
+                },
+                url: '@Url.Action("HostGame")',
+                success: function (newPage) {
+                    $("#MainInterface").html(newPage);
+                },
+                complete: function() {
+                    $("#OverlayLoadingScreen").hide();
+                    $("body").removeClass("bodyLoading");
+                }
+            });
+        });
+    });
+</script>

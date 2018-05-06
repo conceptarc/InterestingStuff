@@ -1,0 +1,76 @@
+﻿body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Set width on the form input elements since they're 100% wide by default */
+input,
+select,
+textarea {
+    max-width: 280px;
+}
+
+.screenCover {
+    position: absolute;
+    width: 99999px;
+    height: 99999px;
+    margin-left: -5000px;
+    margin-top: -5000px;
+    background-color: rgba(0, 0, 0, 0.50);
+    cursor: wait;
+}
+
+.bodyLoading {
+    overflow: hidden;
+}
+
+.wideInput {
+    width: 200px;
+}
+
+.rangeSlider {
+    height: 50px;
+}
+
+.mediumPanel {
+    width: 80px;
+    height: 80px;
+    border: 1px solid black;
+    padding-top: 20px;
+    text-align: center;
+    margin: 10px;
+}
+    .mediumPanel:hover {
+        border: 2px solid black;
+        cursor: pointer;
+    }
+
+.mediumPanelSelected {
+    width: 80px;
+    height: 80px;
+    border: 3px solid black;
+    padding-top: 20px;
+    text-align: center;
+    margin: 10px;
+}
+
+.gameScreen {
+    margin: 15px;
+}
+
+.inline {
+    display: inline-block;
+}

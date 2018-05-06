@@ -1,0 +1,39 @@
+﻿@using WebApplication2.Models
+@model GameSession
+@{
+
+}
+
+
+<div class="gameScreen">
+    <label>@Model.GameType</label> - <label>@Model.GameDescription</label>
+    <br />
+    <div>
+        <label class="inline">Session Code: </label>
+        <h2 class="inline">@Model.SessionCode</h2>
+        <p class="inline"> --- Players joined:</p>
+        <p class="inline" id="PlayerCount">0</p>
+        <p class="inline">out of @Model.PlayerCount.</p>
+    </div>
+    <div id="GameMap">
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $.ajax({
+            type: "POST",
+            dataType: "html",
+            data: {
+                playerCount: @Model.PlayerCount,
+                mapId: @Model.MapId
+            },
+            url: '@Url.Action("LoadMap")',
+            success: function (data) {
+                $("#GameMap").html(data);
+            },
+            complete: function() {
+            }
+        });
+    });
+</script>

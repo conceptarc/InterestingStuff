@@ -1,0 +1,151 @@
+﻿@{
+}
+
+<style>
+    .backgroundDemo {
+        border: 1px solid black;
+        width: 400px;
+        height: 500px;
+        margin: 25px;
+    }
+
+    .testObj {
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        border: 1px solid black;
+    }
+</style>
+
+<script src="~/Scripts/jquery-2.2.0.min.js"></script>
+<!-- script src="~/Scripts/jquery.mobile-1.4.5.min.js"></script -->
+<script src="~/Scripts/jquery.signalR-2.2.3.min.js"></script>
+<script src="~/Scripts/modernizr-2.6.2.js"></script>
+<script src="~/signalr/hubs"></script>
+
+<div class="backgroundDemo MobilePage">
+    <div class="testObj">
+        <div style="text-align: center; padding-top:10px;">
+            tap
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $(".ui-loader").hide();
+    });
+
+    var mouseX, mouseY;
+    var beginDrag = false;
+
+    var testHub = $.connection.testHub;
+    testHub.client.broadcast = function (x, y) {
+        $(".testObj").css("left", x);
+        $(".testObj").css("top", y);
+    };
+
+    $.connection.hub.start().done(function () {
+        console.log("This works?!");
+    });
+
+    function OnMouseDown(target) {
+        console.log("selected");
+        var x = parseInt(target.css("left"));
+        var y = parseInt(target.css("top"));
+        var width = parseInt(target.css("width"));
+
+        beginDrag = true;
+    }
+
+    function OnMouseUp(target) {
+        console.log("de-selected");
+        beginDrag = false;
+    }
+
+    $(".testObj").mousedown(function () {
+        //OnMouseDown($(this));
+    });
+    $(".testObj").on("mousedown touchstart", function (e) {
+        console.log(beginDrag);
+        beginDrag = !beginDrag;
+        console.log(e.pageX + ", " + e.pageY + " | " + beginDrag);
+    });
+
+
+    $(".testObj").mouseup(function () {
+        //OnMouseUp($(this));
+    });
+
+    $(document).on("mousemove touchmove", function (e) {
+        mouseX = e.pageX;
+        mouseY = e.pageY;
+    });
+
+    $(document).mouseup(function (e) {
+        //beginDrag = false;
+    });
+
+    beginClock(30);
+    beginNetwork(30);
+
+    var currTime, fpsInterval;
+
+    function beginClock(fps) {
+        currTime = Date.now();
+        fpsInterval = 1000 / fps;
+        tickClock();
+    }
+
+    function tickClock() {
+        requestAnimationFrame(tickClock);
+
+        if (Date.now() - currTime > fpsInterval) {
+            currTime = Date.now();
+
+            // read mouse values and update server
+            if (beginDrag) {
+                var width = parseInt($(".testObj").css("width"));
+                var newX = mouseX - width / 2;
+                var newY = mouseY - width / 2;
+
+                $(".testObj").css("left", newX);
+                $(".testObj").css("top", newY);
+                //$(".testObj").css("animation-name", "animate");
+                //$(".testObj").css("animation-duration", "0.8s");
+                // testHub.server.send(newX, newY);
+            }
+        }
+    }
+
+    var networkTime, networkUpdateInterval;
+
+    function beginNetwork(fps) {
+        networkTime = Date.now();
+        networkUpdateInterval = 1000 / fps;
+        tickNet();
+    }
+
+    function tickNet() {
+        requestAnimationFrame(tickNet);
+
+        if (Date.now() - networkTime > networkUpdateInterval) {
+            networkTime = Date.now();
+
+            // read mouse values and update server
+            if (beginDrag) {
+                var width = parseInt($(".testObj").css("width"));
+                var newX = mouseX - width / 2;
+                var newY = mouseY - width / 2;
+
+                testHub.server.send(newX, newY);
+            }
+        }
+    }
+
+    $("a").click(function () {
+        $(".ui-page").show();
+    });
+
+
+</script>
