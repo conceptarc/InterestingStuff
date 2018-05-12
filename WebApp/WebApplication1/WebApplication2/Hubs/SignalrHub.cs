@@ -32,22 +32,27 @@ namespace LANWeb
 
 
         // From host to players. Host controls player locations and players will send key presses.
-        public void BroadcastPosition(int playerId, int x, int y)
+        public void BroadcastPosition(string sessionCode, int playerId, int x, int y)
         {
-            Clients.Others.broadcast(playerId, x, y);
+            Clients.Others.broadcast(sessionCode, playerId, x, y);
+        }
+
+        public void RefreshPlayers(string sessionCode)
+        {
+            Clients.All.update(sessionCode);
         }
 
         // periodic polling of data
-        public void UpdatePlayerControls(int playerId, int accel, int turn)
+        public void UpdatePlayerControls(string sessionCode, int playerId, int accel, int turn)
         {
-            Clients.Others.updatePlayer(playerId, accel, turn);
+            Clients.Others.updatePlayer(sessionCode, playerId, accel, turn);
         }
 
         // use this method to send key interrupts from the player
         // ready, pause, use items (in game), misc
-        public void SendPlayerKey(int playerId, string key)
+        public void SendPlayerKey(string sessionCode, int playerId, string key)
         {
-            Clients.Others.sendPlayerKey(playerId, key);
+            Clients.Others.sendPlayerKey(sessionCode, playerId, key);
         }
     }
 }

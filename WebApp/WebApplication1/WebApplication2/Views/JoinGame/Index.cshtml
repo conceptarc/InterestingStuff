@@ -3,10 +3,50 @@
     ViewBag.Title = "Join a game";
 }
 
-<h2>Quick Connect</h2>
-<br />
+<style>
 
+    .playerScreenView {
+        border: 1px solid black !important;
+        width: 300px;
+        height: 300px;
+        overflow: hidden;
+    }
+</style>
 
-<input id="" placeholder="Enter room code here." />
+<div id="PlayerScreen" class="playerScreenView">
+    <div class="gameScreen">
 
-<input type="button" value="Enter" />
+        <h2>Quick Connect</h2>
+        <br />
+
+        <input id="SessionCode" placeholder="Enter room code here." />
+        <input id="Name" placeholder="Your name / equivalent." />
+
+        <input id="JoinRoom" type="button" value="Enter" />
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $("#JoinRoom").click(function () {
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                data: {
+                    sessionCode: $("#SessionCode").val(),
+                    name: $("#Name").val()
+                },
+                url: '@Url.Action("JoinRoom")',
+                success: function (data) {
+                    $("#PlayerScreen").html(data);
+                },
+                error: function () {
+                    alert("Invalid session code / room is full.");
+                },
+                complete: function () {
+                }
+            });
+        });
+        
+    });
+</script>

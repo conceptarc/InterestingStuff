@@ -23,11 +23,8 @@ namespace LANWeb.Models.Global
             {
                 if (_globalTempData._gamesInSession == null)
                     _globalTempData._gamesInSession = new Dictionary<string, GameSession>();
+
                 return _globalTempData._gamesInSession;
-            }
-            set
-            {
-                _globalTempData._gamesInSession = value;
             }
         }
     }

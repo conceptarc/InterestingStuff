@@ -1,9 +1,36 @@
-﻿<style>
+﻿@using LANWeb.Models
+@using LANWeb.Controllers;
+@{
+    Player player = ViewBag.Player ?? null;
+    GameSession session = ViewBag.GameSession ?? null;
+    List<MglrRoadSection> roadSections = ViewBag.MglrRoadSections ?? new List<MglrRoadSection>();
+    List<List<MglrRoadBorderLine>> roadLines = ViewBag.MglrRoadLines ?? new List<List<MglrRoadBorderLine>>();
+}
+<style>
     .map1 {
         margin: 15px;
         border: 1px solid black;
-        width: 1600px;
-        height: 900px;
+        width: 1200px;
+        height: 700px;
+        position: relative;
+    }
+    .mglrRoadSection {
+        border: 0px solid gray;
+        /*background-color: rgb(150, 142, 129);*/
+        border-radius: 50%;
+        position:absolute;
+        display:inline-block;
+        margin:0px;
+    }
+    .roadLineOuter {
+        stroke:rgb(128, 128, 128);
+        stroke-width:1;
+        fill: rgb(224, 224, 224);
+    }
+    .roadLineInner {
+        stroke: rgb(128, 128, 128);
+        stroke-width: 1;
+        fill: white;
     }
 </style>
 
@@ -13,12 +40,87 @@
 <script src="~/Scripts/modernizr-2.6.2.js"></script>
 <script src="~/signalr/hubs"></script>
 
+@if (player != null && session != null)
+{
+    <label id="PlayerId">Player @player.PlayerId</label>
+    <label>@player.Name</label>
+}
 <div class="map1">
-
+    <svg width="100%" height="100%">
+        <polyline class="roadLineOuter" points="
+            @foreach (var line in roadLines[0])
+            {
+                @(line.x1 +","+line.y1 +" "+line.x2 +","+line.y2 + " ")
+            }
+        "/>
+        <polyline class="roadLineInner" points="
+            @foreach (var line in roadLines[1])
+            {
+                @(line.x1 +","+line.y1 +" "+line.x2 +","+line.y2 + " ")
+            }
+        "/>
+        @foreach (var section in roadSections)
+        {
+            <div class="mglrRoadSection"
+                 style="
+                 top:@(section.y - section.r/2)px;
+                 left:@(section.x - section.r/2)px;
+                 width:@(section.r * 2)px;
+                 height:@(section.r * 2)px">
+            </div>
+        }
+    </svg>
 </div>
 
 <script>
-    $(document).ready(function () {
+    var mglrHub = $.connection.mglrHub;
+    
+    mglrHub.client.broadcast = function (sessionCode, player, x, y) {
+        if (sessionCode != '@session.SessionCode') return;
 
+    };
+
+    // when a player joins, this command will be broadcasted and the host screen will
+    // query the updated information to display
+    mglrHub.client.update = function (sessionCode) {
+        if (sessionCode != '@session.SessionCode') return;
+        if ($("#PlayerCount", ".gameScreen").length == 0) return;
+
+        console.log("A player has connected.");
+        var playerCounter = $("#PlayerCount", ".gameScreen");
+
+        $.ajax({
+            type: "POST",
+            dataType: "text",
+            data: {
+                sessionCode: sessionCode
+            },
+            url: '@session.GameType' + '/GetSessionInfo',
+            success: function (data) {
+                var obj = JSON.parse(data);
+                playerCounter.text(obj.PlayerList.length);
+                if (obj.PlayerList.length == $("#MaxPlayerCount", ".gameScreen").text()) {
+                    $("#ReadySign", ".gameScreen").show();
+                }
+            },
+            complete: function () {
+            }
+        })
+    };
+
+    // apparently the hub connection start must wait until after binding the client side functions
+    $.connection.hub.start().done(function () {
+        console.log("Connected to hub.");
+        
+        // sign in the player
+        if ($("#PlayerId").length == 1) {
+            mglrHub.server.refreshPlayers('@session.SessionCode');
+        }
+    });
+    
+
+    $(document).ready(function () {
+        //debugger;
+        
     });
 </script>

@@ -1,4 +1,4 @@
-﻿@using WebApplication2.Models
+﻿@using LANWeb.Models
 @model GameSession
 @{
 
@@ -12,8 +12,10 @@
         <label class="inline">Session Code: </label>
         <h2 class="inline">@Model.SessionCode</h2>
         <p class="inline"> --- Players joined:</p>
-        <p class="inline" id="PlayerCount">0</p>
-        <p class="inline">out of @Model.PlayerCount.</p>
+        <h2 class="inline" id="PlayerCount">0</h2>
+        <h2 class="inline">/</h2>
+        <h2 class="inline" id="MaxPlayerCount">@Model.MaxPlayers</h2>
+        <h2 class="inline" id="ReadySign" style="color:green; display:none">[Ready to start.]</h2>
     </div>
     <div id="GameMap">
     </div>
@@ -21,19 +23,23 @@
 
 <script>
     $(document).ready(function () {
-        $.ajax({
-            type: "POST",
-            dataType: "html",
-            data: {
-                playerCount: @Model.PlayerCount,
-                mapId: @Model.MapId
-            },
-            url: '@Url.Action("LoadMap")',
-            success: function (data) {
-                $("#GameMap").html(data);
-            },
-            complete: function() {
-            }
-        });
+        loadMap('@Model.SessionCode', '@Url.Action("LoadMap")')
+
+        function loadMap(sessionCode, url) {
+            $.ajax({
+                type: "POST",
+                dataType: "html",
+                data: {
+                    sessionCode: sessionCode
+                },
+                url: url,
+                success: function (data) {
+                    $("#GameMap").html(data);
+                },
+                complete: function() {
+                }
+            });
+        }
+        
     });
 </script>

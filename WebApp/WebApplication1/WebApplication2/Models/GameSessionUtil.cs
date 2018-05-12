@@ -8,7 +8,7 @@ namespace LANWeb.Models
 {
     public static class GameSessionUtil
     {
-        public static string GenerateNewSessionCode(int length = 5, int maxTries = 10)
+        public static string GenerateNewSessionCode(int length = 3, int maxTries = 10)
         {
             /* E.g. 00AA will not conflict with 00AA0
              * 1111 will not conflict with 111 nor 11 nor 11111
