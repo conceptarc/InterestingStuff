@@ -15,8 +15,11 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Drawing;
 using System.Threading;
+using System.Globalization;
+using System.IO;
 using Hardcodet.Wpf;
 using Hardcodet.Wpf.TaskbarNotification;
+using Newtonsoft.Json;
 
 namespace TimeTrackingApp
 {
@@ -27,8 +30,9 @@ namespace TimeTrackingApp
     {
         private TaskbarIcon taskBarIcon;
         private ObservableCollection<TimeEntryView> viewCollection;
-        private List<TimeEntry> currentTimeEntries;
+        public List<TimeEntry> CurrentTimeEntries { get; set; }
         private Dictionary<int, TimeEntry> entryByIds;
+        private EntryDetails detailsView;
 
         public MainWindow()
         {
@@ -37,6 +41,33 @@ namespace TimeTrackingApp
             InitTaskbar();
 
             InitDataGrid();
+
+            detailsView = new EntryDetails();
+            detailsView.Hide();
+
+            // Init title bar with current date
+            DateTime n = DateTime.Now;
+            string GetDaySuffix(int day)
+            {
+                // https://stackoverflow.com/questions/2050805/getting-day-suffix-when-using-datetime-tostring
+                switch (day)
+                {
+                    case 1:
+                    case 21:
+                    case 31:
+                        return "st";
+                    case 2:
+                    case 22:
+                        return "nd";
+                    case 3:
+                    case 23:
+                        return "rd";
+                    default:
+                        return "th";
+                }
+            }
+            CurrentDateTime.Text = $"{n.DayOfWeek.ToString()} {n.ToString("MMMM dd")}" +
+                $"{GetDaySuffix(n.Day)} {n.ToString("yyyy")}";
         }
 
         // Set up the taskbar icon and its right-click menu option
@@ -47,6 +78,7 @@ namespace TimeTrackingApp
             closeOption.Click += new RoutedEventHandler(
                 (object sendr, RoutedEventArgs eventArgs) =>
                 {
+                    SaveTimeEntries(CurrentTimeEntries);
                     Environment.Exit(0); // use this over Application.Current.Shutdown()
                 });
 
@@ -82,7 +114,7 @@ namespace TimeTrackingApp
             TableGrid.MinRowHeight = 50;
 
             viewCollection = new ObservableCollection<TimeEntryView>();
-            currentTimeEntries = LoadTimeEntries();
+            CurrentTimeEntries = LoadTimeEntries();
             entryByIds = new Dictionary<int, TimeEntry>();
 
             RefreshViewCollection();
@@ -114,20 +146,39 @@ namespace TimeTrackingApp
                     (TableGrid.Columns[3] as DataGridTextColumn).ElementStyle = style;
                 });
             });
+
+            // Start task for auto-saving
+            Task.Factory.StartNew(() =>
+            {
+                while (true)
+                {
+                    Thread.Sleep(15000); // 15 sec
+                    SaveTimeEntries(CurrentTimeEntries);
+                }
+            });
         }
 
         private void RefreshViewCollection()
         {
             // Merge / update differences between the currentTimeEntries and viewCollection
 
-            // Use for-int so we can modify the collection.
-            for (int i = 0; i < viewCollection.Count; i++)
+            // Use reverse for-int loop so we can modify the collection.
+            for (int i = viewCollection.Count - 1; i >= 0; i--)
             {
                 TimeEntryView view = viewCollection[i];
                 int id = view.GetId();
                 if (!entryByIds.ContainsKey(id))
                     continue;
 
+                // check if we deleted a record from CurrentTimeEntries
+                // viewCollection could be out of date here
+                if (!CurrentTimeEntries.Contains(entryByIds[id]))
+                {
+                    viewCollection.RemoveAt(i);
+                    continue;
+                }
+
+                // update row details every tick
                 TimeEntryView newView = entryByIds[id].ToView(id);
                 view.Active = newView.Active;
                 view.Hours = newView.Hours;
@@ -136,14 +187,20 @@ namespace TimeTrackingApp
             }
 
             // Insert new
-            foreach (TimeEntry entry in currentTimeEntries)
+            foreach (TimeEntry entry in CurrentTimeEntries)
             {
                 if (entryByIds.ContainsValue(entry))
                     continue;
 
                 int newId = entryByIds.Keys.Count + 1;
                 entryByIds[newId] = entry;
-                viewCollection.Add(entry.ToView(newId));
+                var newRow = entry.ToView(newId);
+                viewCollection.Add(newRow);
+
+                // autoselect newest entry
+                TableGrid.SelectedItem = newRow;
+                TableGrid.ScrollIntoView(newRow);
+                DisplayDetails(true); // trigger Edit window
             }
 
             //viewCollection.Clear();
@@ -167,39 +224,54 @@ namespace TimeTrackingApp
             }
         }
 
+        private string GetFileName()
+        {
+            // No database for now; we will just store data into a text file (1 file per day)
+            string suffix = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+            string fileName = $"TimeData_{suffix}.dat";
+
+            return fileName;
+        }
+
         private List<TimeEntry> LoadTimeEntries()
         {
-#warning test data for now
-            return new List<TimeEntry>
+            // No database for now; we will just store data into a text file (1 file per day)
+            string fileName = GetFileName();
+
+            if (!File.Exists(fileName))
+                return new List<TimeEntry>();
+
+            try
             {
-                new TimeEntry
-                {
-                    Name = "test1",
-                    Details = "developing this task and then logging my time into Jira.." +
-                        ".\r\n- continuing after lunch",
-                    TimePeriods = new List<TimePeriod>
-                    {
-                        new TimePeriod
-                        {
-                            StartTime = DateTime.Now.AddHours(-2.5),
-                            EndTime = DateTime.Now.AddHours(-1.5)
-                        }
-                    }
-                },
-                new TimeEntry
-                {
-                    Name = "task2",
-                    Details = "reading this textbook before committing the code.." +
-                        ".\r\n- continuing after lunch",
-                    TimePeriods = new List<TimePeriod>
-                    {
-                        new TimePeriod
-                        {
-                            StartTime = DateTime.Now.AddHours(-1.5)
-                        }
-                    }
-                }
-            };
+                string fileJson = File.ReadAllText(fileName);
+                var entries = JsonConvert.DeserializeObject<List<TimeEntry>>(fileJson);
+
+                return entries ?? new List<TimeEntry>();
+            }
+            catch
+            {
+                return new List<TimeEntry>();
+            }
+        }
+
+        private void SaveTimeEntries(List<TimeEntry> timeEntries)
+        {
+            string fileName = GetFileName();
+
+            string jsonData = JsonConvert.SerializeObject(timeEntries);
+
+            try
+            {
+                File.WriteAllText(fileName, jsonData); // save attempt conflicted
+            }
+            catch (Exception e)
+            {
+            } // just try again later
+        }
+
+        public void SaveImmediately()
+        {
+            SaveTimeEntries(CurrentTimeEntries);
         }
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
@@ -226,21 +298,26 @@ namespace TimeTrackingApp
 
             if (e.Key == Key.S) // start / stop
                 ToggleEntryTimer();
+
+            if (e.Key == Key.E) // edit
+                DisplayDetails();
         }
 
         private void CreateNewEntry()
         {
-            TimeEntry activeEntry = currentTimeEntries.FirstOrDefault(m => m.IsActive);
+            TimeEntry activeEntry = CurrentTimeEntries.FirstOrDefault(m => m.IsActive);
             if (activeEntry != null)
                 activeEntry.StopTimer();
 
             TimeEntry newEntry = new TimeEntry
             {
-                Name = "test click",
-                Details = "test test test"
+                UniqueId = Guid.NewGuid(),
+                Name = "(new) Created: " + DateTime.Now.ToString("h:mm:ss tt"),
+                Details = ""
             };
-            currentTimeEntries.Add(newEntry);
+            CurrentTimeEntries.Add(newEntry);
             newEntry.StartTimer();
+            SaveImmediately();
         }
 
         #endregion
@@ -281,11 +358,50 @@ namespace TimeTrackingApp
 
         private void SwitchTimer(TimeEntry newEntry)
         {
-            TimeEntry activeEntry = currentTimeEntries.FirstOrDefault(m => m.IsActive);
+            TimeEntry activeEntry = CurrentTimeEntries.FirstOrDefault(m => m.IsActive);
             if (activeEntry != null)
                 activeEntry.StopTimer();
 
             newEntry.StartTimer();
+        }
+
+        #endregion
+
+        #region Edit Entry / Text
+
+        private void EditEntry_Click(object sender, RoutedEventArgs e)
+        {
+            DisplayDetails();
+        }
+
+        private void DisplayDetails(bool highlightName = false)
+        {
+            if (TableGrid.SelectedItem == null)
+                return;
+
+            if (!detailsView.CloseWithoutSave()) // close previous work
+            {
+                return;
+            }
+
+            detailsView.MainWindow = this;
+            TimeEntryView selectedViewEntry = TableGrid.SelectedItem as TimeEntryView;
+            TimeEntry selectedEntry = entryByIds[selectedViewEntry.GetId()];
+
+            detailsView.Show();
+            detailsView.Focus();
+            detailsView.SelectedTimeEntry = selectedEntry;
+            // set all the text values on the screen
+            detailsView.NameField.Text = selectedEntry.Name;
+            detailsView.DetailsField.Text = selectedEntry.Details;
+            detailsView.TimeStatusText.Text = selectedEntry.IsActive ? "Yes" : "No";
+            detailsView.CurrentTime.Text = selectedEntry.ToView(0).Hours;
+
+            if (highlightName)
+            {
+                detailsView.NameField.Focus();
+                detailsView.NameField.SelectAll();
+            }
         }
 
         #endregion

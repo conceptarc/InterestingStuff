@@ -9,6 +9,7 @@ namespace TimeTrackingApp
 {
     public class TimeEntry
     {
+        public Guid UniqueId { get; set; }
         public string Name { get; set; }
         public string Details { get; set; }
 
@@ -26,6 +27,7 @@ namespace TimeTrackingApp
                 timePeriods = value;
             }
         }
+        public decimal OffsetHours { get; set; }
 
         public bool IsActive
         {
@@ -42,7 +44,7 @@ namespace TimeTrackingApp
             {
                 decimal totalHours = Convert.ToDecimal(this.GetDuration().TotalHours);
                 // don't deal with double imprecision
-                return Math.Round(totalHours, 4);
+                return Math.Round(totalHours, 4) + OffsetHours;
             }
         }
 
@@ -92,7 +94,7 @@ namespace TimeTrackingApp
             var view = new TimeEntryView
             {
                 Active = IsActive,
-                Hours = DurationHours.ToString("0.00000"),
+                Hours = DurationHours.ToString("0.0000"),
                 Name = Name,
                 Details = Details
             };
