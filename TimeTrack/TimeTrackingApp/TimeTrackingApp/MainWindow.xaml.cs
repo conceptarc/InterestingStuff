@@ -33,6 +33,7 @@ namespace TimeTrackingApp
         public List<TimeEntry> CurrentTimeEntries { get; set; }
         private Dictionary<int, TimeEntry> entryByIds;
         private EntryDetails detailsView;
+        private string dateString;
 
         public MainWindow()
         {
@@ -68,6 +69,8 @@ namespace TimeTrackingApp
             }
             CurrentDateTime.Text = $"{n.DayOfWeek.ToString()} {n.ToString("MMMM dd")}" +
                 $"{GetDaySuffix(n.Day)} {n.ToString("yyyy")}";
+
+            dateString = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
         }
 
         // Set up the taskbar icon and its right-click menu option
@@ -78,7 +81,7 @@ namespace TimeTrackingApp
             closeOption.Click += new RoutedEventHandler(
                 (object sendr, RoutedEventArgs eventArgs) =>
                 {
-                    SaveTimeEntries(CurrentTimeEntries);
+                    SaveImmediately();
                     Environment.Exit(0); // use this over Application.Current.Shutdown()
                 });
 
@@ -152,8 +155,8 @@ namespace TimeTrackingApp
             {
                 while (true)
                 {
-                    Thread.Sleep(15000); // 15 sec
-                    SaveTimeEntries(CurrentTimeEntries);
+                    Thread.Sleep(10000); // 10 sec
+                    SaveImmediately();
                 }
             });
         }
@@ -208,6 +211,9 @@ namespace TimeTrackingApp
             //{
             //    viewCollection.Add(entry.ToView());
             //}
+
+            TotalHours.Text = CurrentTimeEntries.Sum(m => m.DurationHours)
+                .ToString("0.00") + " total hours";
         }
 
         private void RenderTableGrid()
@@ -257,7 +263,6 @@ namespace TimeTrackingApp
         private void SaveTimeEntries(List<TimeEntry> timeEntries)
         {
             string fileName = GetFileName();
-
             string jsonData = JsonConvert.SerializeObject(timeEntries);
 
             try
@@ -271,6 +276,27 @@ namespace TimeTrackingApp
 
         public void SaveImmediately()
         {
+            // check if the day has rolled over
+            string newDateString = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+            if (newDateString != dateString)
+            {
+                dateString = newDateString;
+                // Bug fix: when leaving this program overnight, it will save the previous
+                // day's data into the next day's data file. Solution: do not save the 
+                // previous day's completed time entries.
+                lock (CurrentTimeEntries)
+                {
+                    for (int i = CurrentTimeEntries.Count - 1; i >= 0; i--)
+                    {
+                        TimeEntry entry = CurrentTimeEntries[i];
+                        if (!entry.IsActive)
+                        {
+                            CurrentTimeEntries.RemoveAt(i);
+                        }
+                    }
+                }
+            }
+
             SaveTimeEntries(CurrentTimeEntries);
         }
 
@@ -396,6 +422,8 @@ namespace TimeTrackingApp
             detailsView.DetailsField.Text = selectedEntry.Details;
             detailsView.TimeStatusText.Text = selectedEntry.IsActive ? "Yes" : "No";
             detailsView.CurrentTime.Text = selectedEntry.ToView(0).Hours;
+
+            detailsView.PendingOffset = 0;
 
             if (highlightName)
             {

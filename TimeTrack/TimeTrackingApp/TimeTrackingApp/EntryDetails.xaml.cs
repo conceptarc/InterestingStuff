@@ -22,6 +22,7 @@ namespace TimeTrackingApp
     {
         public MainWindow MainWindow { get; set; }
         public TimeEntry SelectedTimeEntry { get; set; }
+        public decimal PendingOffset { get; set; }
         private EditTime popup;
 
         public EntryDetails()
@@ -47,7 +48,9 @@ namespace TimeTrackingApp
                         if (SelectedTimeEntry == null)
                             return; // (potential) null exception
 
-                        CurrentTime.Text = SelectedTimeEntry.ToView(0).Hours;
+                        decimal hours = decimal.Parse(SelectedTimeEntry.ToView(0).Hours) +
+                            PendingOffset;
+                        CurrentTime.Text = hours.ToString();
                     });
                 }
             });
@@ -66,9 +69,9 @@ namespace TimeTrackingApp
             SelectedTimeEntry.Name = NameField.Text;
             SelectedTimeEntry.Details = DetailsField.Text;
 
-            decimal currentHours = decimal.Parse(SelectedTimeEntry.ToView(0).Hours);
-            decimal newHours = decimal.Parse(CurrentTime.Text);
-            SelectedTimeEntry.OffsetHours += newHours - currentHours;
+            //decimal currentHours = decimal.Parse(SelectedTimeEntry.ToView(0).Hours);
+            //decimal newHours = decimal.Parse(CurrentTime.Text);
+            SelectedTimeEntry.OffsetHours += PendingOffset;
 
             MainWindow.SaveImmediately();
 
@@ -138,6 +141,15 @@ namespace TimeTrackingApp
 
             if (e.Key == Key.F9) // delete
                 DeleteEntry();
+
+            // other hotkeys for productivity
+            if (e.Key == Key.Tab)
+            {
+                if (!DetailsField.IsFocused)
+                {
+                    DetailsField.Focus();
+                }
+            }
         }
 
         private void SaveClose_Click(object sender, RoutedEventArgs e)
@@ -161,10 +173,20 @@ namespace TimeTrackingApp
             // the time of an entry.
             // Since the total duration is calculated each time, we can use a variable offset.
 
+            if (this.popup != null)
+            {
+                this.popup.Close();
+                this.popup = null;
+            }
             this.popup = new EditTime();
             popup.ParentWindow = this;
             popup.SelectedTimeEntry = SelectedTimeEntry;
-            popup.NewHours.Text = SelectedTimeEntry.ToView(0).Hours;
+
+            // pending to be saved / tentative changes applied
+            decimal pendingHours = decimal.Parse(SelectedTimeEntry.ToView(0).Hours) +
+                PendingOffset;
+
+            popup.NewHours.Text = pendingHours.ToString();
             popup.Show();
             popup.Focus();
             popup.NewHours.Focus();

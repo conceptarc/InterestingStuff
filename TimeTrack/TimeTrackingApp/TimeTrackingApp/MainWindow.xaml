@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTrackingApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="532" Width="800"
+        Title="Time Manager Main Window" Height="532" Width="800"
         Closing="Window_Closing" KeyUp="WindowScreen_KeyUp">
     <Grid>
         <Grid.Background>
@@ -15,16 +15,17 @@
             </LinearGradientBrush>
         </Grid.Background>
         <Grid.RowDefinitions>
-            <RowDefinition Height="452*"/>
-            <RowDefinition Height="69*"/>
+            <RowDefinition/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <DataGrid x:Name="TableGrid" HorizontalAlignment="Stretch" Height="auto" Width="auto" Margin="10,39,9.6,43.4" VerticalAlignment="Stretch" SelectionChanged="TableGrid_SelectionChanged" MouseDown="TableGrid_MouseDown" FontSize="14" FontFamily="Open Sans" Background="#FFE7E7E7" RowBackground="White" Grid.RowSpan="2"/>
-        <Button x:Name="NewEntry" Content="New (N)" Margin="10,28,0,0" VerticalAlignment="Top" Height="28" FontSize="16" FontFamily="Malgun Gothic" Click="NewEntry_Click" Foreground="#FF525252" BorderBrush="#FF2124FF" Background="#FFEDEDED" FontWeight="Bold" Grid.Row="1" HorizontalAlignment="Left" Width="142"/>
-        <Button x:Name="ToggleTimer" Content="Start/Stop (S)" Margin="217,28,0,0" VerticalAlignment="Top" Height="28" FontSize="16" FontFamily="Malgun Gothic" Click="ToggleTimer_Click" Foreground="#FF525252" BorderBrush="#FF2124FF" Background="#FFEDEDED" FontWeight="Bold" Grid.Row="1" HorizontalAlignment="Left" Width="148"/>
-        <Button x:Name="EditEntry" Content="Edit (E)" Margin="426,28,0,0" VerticalAlignment="Top" Height="28" FontSize="16" FontFamily="Malgun Gothic" Click="EditEntry_Click" Foreground="#FF525252" BorderBrush="#FF2124FF" Background="#FFEDEDED" FontWeight="Bold" Grid.Row="1" HorizontalAlignment="Left" Width="148"/>
-        <TextBox x:Name="CurrentDateTime" Height="24" Margin="10,10,9.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True"/>
+        <DataGrid x:Name="TableGrid" HorizontalAlignment="Stretch" Height="auto" Width="auto" Margin="10,39,9.6,38.4" VerticalAlignment="Stretch" SelectionChanged="TableGrid_SelectionChanged" MouseDown="TableGrid_MouseDown" FontSize="14" FontFamily="Open Sans" Background="#FFE7E7E7" RowBackground="White"/>
+        <Button x:Name="NewEntry" Content="New (N)" Margin="11,0,0,5.4" FontSize="14" Click="NewEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="142" Height="28" VerticalAlignment="Bottom"/>
+        <Button x:Name="ToggleTimer" Content="Start/Stop (S)" Margin="217,0,0,5.4" FontSize="14" Click="ToggleTimer_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
+        <Button x:Name="EditEntry" Content="Edit (E)" Margin="426,0,0,5.4" FontSize="14" Click="EditEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
+        <TextBox x:Name="CurrentDateTime" Height="24" Margin="10,10,154.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True"/>
+        <Label Content="Last updated: 2019-03-24" Margin="0,0,9.6,5.4" FontSize="10" Height="24" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="123"/>
+        <TextBox x:Name="TotalHours" Height="24" Margin="0,10,9.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True" HorizontalAlignment="Right" Width="140"/>
     </Grid>
 </Window>

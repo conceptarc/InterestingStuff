@@ -70,6 +70,39 @@ namespace TimeTrackingApp
         //    return Math.Round(totalHours, decimalPrecision);
         //}
 
+        public DateTime? GetBeginTime() // null if never started
+        {
+            if (timePeriods == null || timePeriods.Count == 0)
+                return null;
+            DateTime earliestTime = timePeriods.First().StartTime;
+            foreach (TimePeriod timePeriod in timePeriods)
+            {
+                if (earliestTime.CompareTo(timePeriod.StartTime) > 0)
+                {
+                    earliestTime = timePeriod.StartTime;
+                }
+            }
+            return earliestTime;
+        }
+
+        public DateTime? GetEndTime() // null if not finished
+        {
+            if (timePeriods == null || timePeriods.Count == 0)
+                return null;
+            DateTime? latestTime = timePeriods.First().EndTime;
+            foreach (TimePeriod timePeriod in timePeriods)
+            {
+                if (latestTime == null || timePeriod.EndTime == null)
+                    return null; // one of the time periods has not finished (still ticking)
+
+                if (latestTime.Value.CompareTo(timePeriod.EndTime.Value) > 0)
+                {
+                    latestTime = timePeriod.EndTime;
+                }
+            }
+            return latestTime;
+        }
+
         public void StartTimer()
         {
             // Check if the last time period is still running. If so do nothing.

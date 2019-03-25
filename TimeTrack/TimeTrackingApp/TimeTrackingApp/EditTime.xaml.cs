@@ -35,7 +35,9 @@ namespace TimeTrackingApp
 
         private void ApplyNewTime()
         {
-            decimal currentHours = decimal.Parse(SelectedTimeEntry.ToView(0).Hours);
+            decimal currentHours = decimal.Parse(SelectedTimeEntry.ToView(0).Hours) +
+                ParentWindow.PendingOffset;
+
             if (!decimal.TryParse(NewHours.Text, out decimal newTimeInHours))
             {
                 NewHours.Text = currentHours.ToString();
@@ -44,7 +46,8 @@ namespace TimeTrackingApp
 
             // careful not to accidentally change the source data
             // i.e. still allow the user to cancel later
-            ParentWindow.CurrentTime.Text = newTimeInHours.ToString();
+            ParentWindow.PendingOffset += newTimeInHours - currentHours;
+            //ParentWindow.CurrentTime.Text = newTimeInHours.ToString();
             this.Close();
         }
 

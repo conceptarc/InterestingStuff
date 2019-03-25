@@ -7,23 +7,23 @@
         mc:Ignorable="d"
         Closing="Window_Closing"
         KeyUp="WindowScreen_KeyUp"
-        Title="EntryDetails" Height="331.2" Width="570.8">
+        ResizeMode="NoResize"
+        Title="Details" Height="331.2" Width="570.8">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="408*"/>
-            <ColumnDefinition Width="157*"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <TextBox x:Name="NameField" AcceptsReturn="True" AcceptsTab="True" HorizontalAlignment="Left" Height="45" Margin="96,18,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="252"/>
-        <Label x:Name="TimerStatus" Content="Timer Active:" Margin="370,13,110.8,0" VerticalAlignment="Top" Height="26" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="NameField" AcceptsReturn="True" HorizontalAlignment="Left" Height="45" Margin="96,18,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="252"/>
+        <Label x:Name="TimerStatus" Content="Timer Active:" Margin="370,13,110.8,0" VerticalAlignment="Top" Height="26"/>
         <Label Content="Name&#xD;&#xA;(Optional)" HorizontalAlignment="Left" Margin="10,18,0,0" VerticalAlignment="Top" Width="81" Height="43"/>
-        <TextBox x:Name="CurrentTime" HorizontalAlignment="Left" Height="22" Margin="12,48,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="74" Grid.Column="1" IsReadOnly="True"/>
-        <Label Content="Time" HorizontalAlignment="Left" Margin="370,45,0,0" VerticalAlignment="Top" Width="49" Height="26" Grid.ColumnSpan="2"/>
-        <TextBox x:Name="DetailsField" AcceptsReturn="True" AcceptsTab="True" HorizontalAlignment="Left" Height="151" Margin="72,86,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="472" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="CurrentTime" Height="22" Margin="420,48,81.8,0" TextWrapping="Wrap" VerticalAlignment="Top" IsReadOnly="True"/>
+        <Label Content="Time" Margin="370,45,145.8,0" VerticalAlignment="Top" Height="26"/>
+        <TextBox x:Name="DetailsField" AcceptsReturn="True" AcceptsTab="True" HorizontalAlignment="Left" Height="151" Margin="72,86,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="472"/>
         <Label Content="Details" HorizontalAlignment="Left" Margin="10,86,0,0" VerticalAlignment="Top" Width="62" Height="26"/>
         <Button x:Name="SaveClose" Content="Save &amp; Close (F1)" HorizontalAlignment="Left" Margin="20,256,0,0" VerticalAlignment="Top" Width="113" Click="SaveClose_Click" Height="19"/>
-        <Button x:Name="Delete" Content="Delete (F9)" HorizontalAlignment="Left" Margin="23,256,0,0" VerticalAlignment="Top" Width="113" Click="Delete_Click" Height="19" Grid.Column="1"/>
-        <TextBox x:Name="TimeStatusText" HorizontalAlignment="Left" Height="22" Margin="41,17,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="95" Grid.Column="1" IsReadOnly="True"/>
+        <Button x:Name="Delete" Content="Delete (F9)" HorizontalAlignment="Left" Margin="431,256,0,0" VerticalAlignment="Top" Width="113" Click="Delete_Click" Height="19"/>
+        <TextBox x:Name="TimeStatusText" HorizontalAlignment="Left" Height="22" Margin="449,17,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="95" IsReadOnly="True"/>
         <Button x:Name="CancelClose" Content="Cancel / Close (F4)" HorizontalAlignment="Left" Margin="222,256,0,0" VerticalAlignment="Top" Width="113" Click="CancelClose_Click" Height="19"/>
-        <Button x:Name="AddTime" Content="Edit" HorizontalAlignment="Left" Margin="91,50,0,0" VerticalAlignment="Top" Width="45" Click="AddTime_Click" Height="19" Grid.Column="1" RenderTransformOrigin="0.097,0.568"/>
+        <Button x:Name="AddTime" Content="Edit" HorizontalAlignment="Left" Margin="499,50,0,0" VerticalAlignment="Top" Width="45" Click="AddTime_Click" Height="19" RenderTransformOrigin="0.097,0.568"/>
     </Grid>
 </Window>

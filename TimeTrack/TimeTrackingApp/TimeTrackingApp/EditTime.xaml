@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         ResizeMode="NoResize"
         KeyUp="WindowScreen_KeyUp"
-        Title="EditTime" Height="178.259" Width="228.911">
+        Title="Edit Time" Height="178.259" Width="228.911">
     <Grid>
         <Label Content="Enter new time (in hours)" HorizontalAlignment="Left" Margin="10,19,0,0" VerticalAlignment="Top" Height="34" Width="202"/>
         <TextBox x:Name="NewHours" HorizontalAlignment="Left" Height="26" Margin="29,58,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="177"/>
