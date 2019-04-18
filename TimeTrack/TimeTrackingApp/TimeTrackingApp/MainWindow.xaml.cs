@@ -35,9 +35,14 @@ namespace TimeTrackingApp
         private EntryDetails detailsView;
         private string dateString;
 
+        private DateTime currentViewingDate;
+        private bool pauseUI; // kind of used like a mutex
+
         public MainWindow()
         {
             InitializeComponent();
+
+            currentViewingDate = DateTime.Now;
 
             InitTaskbar();
 
@@ -47,30 +52,7 @@ namespace TimeTrackingApp
             detailsView.Hide();
 
             // Init title bar with current date
-            DateTime n = DateTime.Now;
-            string GetDaySuffix(int day)
-            {
-                // https://stackoverflow.com/questions/2050805/getting-day-suffix-when-using-datetime-tostring
-                switch (day)
-                {
-                    case 1:
-                    case 21:
-                    case 31:
-                        return "st";
-                    case 2:
-                    case 22:
-                        return "nd";
-                    case 3:
-                    case 23:
-                        return "rd";
-                    default:
-                        return "th";
-                }
-            }
-            CurrentDateTime.Text = $"{n.DayOfWeek.ToString()} {n.ToString("MMMM dd")}" +
-                $"{GetDaySuffix(n.Day)} {n.ToString("yyyy")}";
-
-            dateString = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+            UpdateViewingDate();
         }
 
         // Set up the taskbar icon and its right-click menu option
@@ -161,7 +143,7 @@ namespace TimeTrackingApp
             });
         }
 
-        private void RefreshViewCollection()
+        private void RefreshViewCollection(bool openNewEntry = true)
         {
             // Merge / update differences between the currentTimeEntries and viewCollection
 
@@ -200,10 +182,13 @@ namespace TimeTrackingApp
                 var newRow = entry.ToView(newId);
                 viewCollection.Add(newRow);
 
-                // autoselect newest entry
-                TableGrid.SelectedItem = newRow;
-                TableGrid.ScrollIntoView(newRow);
-                DisplayDetails(true); // trigger Edit window
+                if (openNewEntry)
+                {
+                    // autoselect newest entry
+                    TableGrid.SelectedItem = newRow;
+                    TableGrid.ScrollIntoView(newRow);
+                    DisplayDetails(true); // trigger Edit window
+                }
             }
 
             //viewCollection.Clear();
@@ -222,7 +207,10 @@ namespace TimeTrackingApp
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    RefreshViewCollection();
+                    if (!pauseUI)
+                    {
+                        RefreshViewCollection();
+                    }
                     //TableGrid.Items.Refresh();
                     //CollectionViewSource.GetDefaultView(TableGrid.ItemsSource).Refresh();
                 });
@@ -230,10 +218,50 @@ namespace TimeTrackingApp
             }
         }
 
+        private void UpdateViewingDate()
+        {
+            pauseUI = true;
+
+            // Init title bar with current date
+            DateTime n = currentViewingDate;
+
+            string GetDaySuffix(int day)
+            {
+                // https://stackoverflow.com/questions/2050805/getting-day-suffix-when-using-datetime-tostring
+                switch (day)
+                {
+                    case 1:
+                    case 21:
+                    case 31:
+                        return "st";
+                    case 2:
+                    case 22:
+                        return "nd";
+                    case 3:
+                    case 23:
+                        return "rd";
+                    default:
+                        return "th";
+                }
+            }
+            CurrentDateTime.Text = $"{n.DayOfWeek.ToString()} {n.ToString("MMMM dd")}" +
+                $"{GetDaySuffix(n.Day)} {n.ToString("yyyy")}";
+
+            dateString = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+
+            this.Dispatcher.Invoke(() =>
+            {
+                RefreshViewCollection(false);
+                //TableGrid.Items.Refresh();
+                //CollectionViewSource.GetDefaultView(TableGrid.ItemsSource).Refresh();
+                pauseUI = false;
+            });
+        }
+
         private string GetFileName()
         {
             // No database for now; we will just store data into a text file (1 file per day)
-            string suffix = DateTime.Now.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+            string suffix = currentViewingDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
             string fileName = $"TimeData_{suffix}.dat";
 
             return fileName;
@@ -262,6 +290,9 @@ namespace TimeTrackingApp
 
         private void SaveTimeEntries(List<TimeEntry> timeEntries)
         {
+            if (!timeEntries.Any())
+                return; // don't create a bunch of empty files (esp. when navigating dates)
+
             string fileName = GetFileName();
             string jsonData = JsonConvert.SerializeObject(timeEntries);
 
@@ -295,6 +326,10 @@ namespace TimeTrackingApp
                         }
                     }
                 }
+
+                // Don't forget to update the display.
+                currentViewingDate = DateTime.Now;
+                UpdateViewingDate();
             }
 
             SaveTimeEntries(CurrentTimeEntries);
@@ -380,6 +415,8 @@ namespace TimeTrackingApp
                 selectedEntry.StopTimer();
             else
                 SwitchTimer(selectedEntry);
+
+            SaveImmediately();
         }
 
         private void SwitchTimer(TimeEntry newEntry)
@@ -434,5 +471,28 @@ namespace TimeTrackingApp
 
         #endregion
 
+        private void PrevDay_Click(object sender, RoutedEventArgs e)
+        {
+            SaveImmediately();
+            currentViewingDate = currentViewingDate.AddDays(-1);
+            CurrentTimeEntries = LoadTimeEntries();
+            UpdateViewingDate();
+        }
+
+        private void NextDay_Click(object sender, RoutedEventArgs e)
+        {
+            SaveImmediately();
+            currentViewingDate = currentViewingDate.AddDays(1);
+            CurrentTimeEntries = LoadTimeEntries();
+            UpdateViewingDate();
+        }
+
+        private void ReturnToNow_Click(object sender, RoutedEventArgs e)
+        {
+            SaveImmediately();
+            currentViewingDate = DateTime.Now;
+            CurrentTimeEntries = LoadTimeEntries();
+            UpdateViewingDate();
+        }
     }
 }

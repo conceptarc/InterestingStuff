@@ -24,8 +24,11 @@
         <Button x:Name="NewEntry" Content="New (N)" Margin="11,0,0,5.4" FontSize="14" Click="NewEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="142" Height="28" VerticalAlignment="Bottom"/>
         <Button x:Name="ToggleTimer" Content="Start/Stop (S)" Margin="217,0,0,5.4" FontSize="14" Click="ToggleTimer_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
         <Button x:Name="EditEntry" Content="Edit (E)" Margin="426,0,0,5.4" FontSize="14" Click="EditEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
-        <TextBox x:Name="CurrentDateTime" Height="24" Margin="10,10,154.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True"/>
-        <Label Content="Last updated: 2019-03-24" Margin="0,0,9.6,5.4" FontSize="10" Height="24" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="123"/>
+        <TextBox x:Name="CurrentDateTime" Height="24" Margin="39,10,219.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True"/>
+        <Label Content="Last updated: 2019-04-17" Margin="0,0,9.6,5.4" FontSize="10" Height="24" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="123"/>
         <TextBox x:Name="TotalHours" Height="24" Margin="0,10,9.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True" HorizontalAlignment="Right" Width="140"/>
+        <Button x:Name="PrevDay" Content="&lt;" HorizontalAlignment="Left" Height="24" Margin="10,10,0,0" VerticalAlignment="Top" Width="24" Click="PrevDay_Click"/>
+        <Button x:Name="NextDay" Content="&gt;" Height="24" Margin="0,10,162.6,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="24" Click="NextDay_Click"/>
+        <Button x:Name="ReturnToNow" Content="||||" Height="24" Margin="0,10,190.6,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="24" Click="ReturnToNow_Click"/>
     </Grid>
 </Window>
