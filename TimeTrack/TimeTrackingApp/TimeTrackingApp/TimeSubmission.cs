@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -18,14 +20,20 @@ namespace TimeTrackingApp
 {
     public static class TimeSubmission
     {
-        private static DateTime date;
+        //private static DateTime date;
         private const string TEMPO_URL = "http://jira.edisoft.com:8080/secure/Tempo.jspa";
+        private static string cachedUser = null;
+        private static string cachedPass = null;
+        private const string salt = "I'm not a security expert.";
 
-        public async static void DoSubmission(string username, string password, DateTime currentViewingDate, bool gui)
+        public static bool HasCachedCredentials()
+        {
+            return !string.IsNullOrEmpty(cachedUser);
+        }
+
+        public async static void StartSubmission(string username, string password, DateTime date, bool gui)
         {
             LogWindow logWindow = new LogWindow();
-
-            date = currentViewingDate;
 
             logWindow.Show();
             logWindow.SetText("Timesheet Log: " + date.ToString("dddd, dd MMMM yyyy") + "\n\n");
@@ -33,8 +41,10 @@ namespace TimeTrackingApp
             // browser configs
             var launchOptions = new LaunchOptions
             {
-                Headless = gui, // = false for testing
-                ExecutablePath = "C:/Program Files/Google/Chrome/Application/chrome.exe"
+                Headless = !gui, // = false for testing
+                ExecutablePath = "C:/Program Files/Google/Chrome/Application/chrome.exe",
+                DefaultViewport = null,
+                Args = new[] { "--start-maximized" }
             };
 
             // open a new page in the browser
@@ -58,51 +68,54 @@ namespace TimeTrackingApp
                 logWindow.Close();
                 return;
             }
-            await TempoLogin((Page)page, username, password, logWindow);
             
+            await TempoLogin((Page)page, username, password, logWindow, date);
         }
 
-        private async static Task LoadTimesheetPopup(Page page, List<TimeEntry> timeEntries, LogWindow logWindow)
+        private async static Task LoadTimesheetPopup(Page page, List<TimeEntry> timeEntries, LogWindow logWindow, DateTime date)
         {
             try
             {
-                //// If the background grey screen is loaded, then wait N seconds until it is gone.
-                for (int i = 0; i < 20; i++)
-                {
-                    try
-                    {
-                        await page.WaitForSelectorAsync(".sc-fONwsr.kbQTLr", new WaitForSelectorOptions { Timeout = 100 }); // grey background
-                        await page.WaitForTimeoutAsync(1000);
-                        if (i == 0)
-                        {
-                            logWindow.SetText("\tWaiting for modal to close.");
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        if (i > 0)
-                        {
-                            logWindow.SetText("\n");
-                        }
-                        break;
-                    }
-
-                }
-
                 foreach (TimeEntry timeEntry in timeEntries)
                 {
+                    //// If the background grey screen is loaded, then wait N seconds until it is gone.
+                    for (int i = 0; i < 20; i++)
+                    {
+                        try
+                        {
+                            await page.WaitForSelectorAsync(".sc-fONwsr.kbQTLr", new WaitForSelectorOptions { Timeout = 100 }); // grey background
+                            await page.WaitForTimeoutAsync(500);
+                            if (i == 0)
+                            {
+                                logWindow.SetText("\tWaiting for modal to close.");
+                            }
+                            else
+                            {
+                                logWindow.SetText("."); // cosmetic
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (i > 0)
+                            {
+                                logWindow.SetText("\n");
+                            }
+                            break;
+                        }
+
+                    }
+
                     logWindow.SetText("Entering time for " + timeEntry.Name + "\n");
                     await page.WaitForSelectorAsync("button[name=logWorkButton]");
                     await page.ClickAsync("button[name=logWorkButton]");
                     
-                    await page.WaitForTimeoutAsync(100);
-                    await page.WaitForSelectorAsync("input[id=issuePickerInput]");
+                    await page.WaitForSelectorAsync("input[id=issuePickerInput]", new WaitForSelectorOptions { Visible = true });
                     await page.ClickAsync("input[id=issuePickerInput]"); // click to focus
                     await page.TypeAsync("input[id=issuePickerInput]", timeEntry.Name);
 
                     logWindow.SetText("\tValidating Jira ID " + timeEntry.Name + "\n");
 
-                    try
+                    try // Validate dropdown
                     {
                         // .sc-hqyNC.cQYmRl appears multiple times: "Current Search" or "History Search"
                         // .sc-jbKcbu.fbJELm is the *sibling* that says 'No matching issues found'
@@ -111,7 +124,7 @@ namespace TimeTrackingApp
 
                         // "Current Search" -> 'No matching issues found'
                         logWindow.SetText("\tSkipping " + timeEntry.Name + "\n");
-                        await page.ClickAsync(".sc-uJMKN.kvhaFl");
+                        await page.ClickAsync(".sc-uJMKN.kvhaFl"); // Cancel button
                         continue; // skip to next time entry
                     }
                     catch { }
@@ -120,6 +133,27 @@ namespace TimeTrackingApp
                     await page.WaitForTimeoutAsync(100);
                     await page.WaitForSelectorAsync("div.sc-kjoXOD.iGfzR"); // dropdown element
                     await page.ClickAsync("div.sc-kjoXOD.iGfzR");
+
+                    // Another validation step to ensure the selected Jira entry is correct.
+                    // E.g. "INT-1" must not match with INT-15
+                    // E.g. "buying lunch" must not match with MCS-344, yes try it yourself to see
+                    try
+                    {
+                        var element = await page.WaitForSelectorAsync($".sc-epnACN.gZrolZ"); // dropdown post-selection UI
+
+                        var selectedJiraLabel = await page.EvaluateFunctionAsync<string>("e => e.textContent", element);
+
+                        if (selectedJiraLabel != $"{timeEntry.Name}:")
+                        {
+                            throw new Exception();
+                        }
+                    }
+                    catch
+                    {
+                        logWindow.SetText("\tSkipping " + timeEntry.Name + "\n");
+                        await page.ClickAsync(".sc-uJMKN.kvhaFl"); // Cancel button
+                        continue; // skip to next time entry
+                    }
 
                     await page.WaitForTimeoutAsync(100);
                     await page.WaitForSelectorAsync("textarea[id=comment]");
@@ -151,22 +185,55 @@ namespace TimeTrackingApp
                         await page.WaitForSelectorAsync("input[id=timeSpentSeconds]");
                         await page.TypeAsync("input[id=billable]", "0h");
                     }
-                    await page.WaitForTimeoutAsync(2000);
                     await page.ClickAsync("button[name=submitWorklogButton]");
-                    await page.WaitForTimeoutAsync(2000);
                 }
+
+                // Only write the success message if all time entries were processed successfully.
+                logWindow.SetText(".....\n");
+                logWindow.SetText("SUCCESSFULLY FILLED :D, Visit Tempo to verify all the entries!\n");
+                MessageBox.Show("Your timesheet has been filled successfully!", "Timesheet Filled");
             }
             catch (Exception ex)
             {
                 logWindow.SetText(ex.Message + "\n");
+                MessageBox.Show("Alert: Review the log text details before closing this message.", "Error occurred");
                 return;
             }
         }
 
-        private async static Task TempoLogin(Page page, string username, string password, LogWindow logWindow)
+        private static string Encrypt(string text)
+        {
+            // https://stackoverflow.com/questions/9031537/really-simple-encryption-with-c-sharp-and-symmetricalgorithm
+            // Good enough for now
+
+            return Convert.ToBase64String(
+                ProtectedData.Protect(
+                    Encoding.Unicode.GetBytes(text),
+                    Encoding.Unicode.GetBytes(salt),
+                    DataProtectionScope.CurrentUser));
+        }
+        private static string Decrypt(string text)
+        {
+            return Encoding.Unicode.GetString(
+                ProtectedData.Unprotect(
+                    Convert.FromBase64String(text),
+                    Encoding.Unicode.GetBytes(salt),
+                    DataProtectionScope.CurrentUser));
+
+        }
+
+        private async static Task TempoLogin(Page page, string username, string password, LogWindow logWindow, DateTime date)
         {
             try
             {
+                if (username == null && password == null)
+                {
+                    username = Decrypt(cachedUser);
+                    password = Decrypt(cachedPass);
+
+                    logWindow.SetText("Using cached credentials from last successful login.\n");
+                }
+
                 await page.WaitForSelectorAsync("input[name=os_username]");
                 await page.WaitForSelectorAsync("input[name=os_password]");
                 await page.WaitForSelectorAsync("input[name=login]");
@@ -174,27 +241,51 @@ namespace TimeTrackingApp
                 await page.TypeAsync("input[name=os_password]", password);
                 await page.ClickAsync("input[name=login]");
 
-                // show error for incorrect login
-                try
+                // Detect either the timesheet screen or the invalid-login screen.
+                int _loginWaitLimit = 10;
+                for (int i = 0; i < 10; i++)
                 {
-                    await page.WaitForSelectorAsync("#login-form > div.form-body > div.aui-message.aui-message-error > p", new WaitForSelectorOptions { Timeout = 5000 });
-                    await page.CloseAsync();
-                    logWindow.SetText("Invalid credentials :(\n");
-                    MessageBox.Show("Please check your username and password and try again!", "Login Error");
-                    logWindow.Close();
-                    return;
+                    try // look for timesheet page
+                    {
+                        await page.WaitForSelectorAsync("button[name=logWorkButton]", new WaitForSelectorOptions { Timeout = 1000 });
+                        logWindow.SetText("Login successful.\n");
+
+                        cachedUser = Encrypt(username);
+                        cachedPass = Encrypt(password);
+
+                        break;
+                    }
+                    catch { }
+
+                    try // look for invalid-login screen
+                    {
+                        await page.WaitForSelectorAsync("#login-form > div.form-body > div.aui-message.aui-message-error > p", new WaitForSelectorOptions { Timeout = 1000 });
+                        await page.CloseAsync();
+                        logWindow.SetText("Invalid credentials :(\n");
+
+                        username = null;
+                        password = null;
+
+                        MessageBox.Show("Please check your username and password and try again!", "Login Error");
+                        logWindow.Close();
+                        return;
+                    }
+                    catch { }
+
+                    if (i == _loginWaitLimit - 1)
+                    {
+                        logWindow.SetText("Timed out during login process.\n");
+                        MessageBox.Show("Please try again later.", "Login Error");
+                        logWindow.Close();
+                        return;
+                    }
                 }
-                catch (Exception ex) { }
 
                 List<TimeEntry> timeEntries = SharedCommon.LoadTimeEntries(date);
-                await LoadTimesheetPopup(page, timeEntries, logWindow);
+                await LoadTimesheetPopup(page, timeEntries, logWindow, date);
 
                 await page.CloseAsync();
-                logWindow.SetText(".....\n");
-                logWindow.SetText("SUCCESSFULLY FILLED :D, Visit Tempo to verify all the entries!\n");
-                MessageBox.Show("Your timesheet has been filled successfully!", "Timesheet Filled");
                 logWindow.Close();
-                return;
             }
             catch (Exception ex)
             {
@@ -202,7 +293,6 @@ namespace TimeTrackingApp
                 logWindow.SetText(ex.Message + "\n");
                 MessageBox.Show("There was an error logging your timesheet!", "Timesheet Logging Error");
                 logWindow.Close();
-                return;
             }
         }
     }

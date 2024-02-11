@@ -33,9 +33,17 @@ namespace TimeTrackingApp
 
         private void LoginBtn_Click(object sender, RoutedEventArgs e)
         {
-            TimeSubmission.DoSubmission(UsernameTxt.Text, PasswordTxt.Password, currentViewingDate, gui);
+            TimeSubmission.StartSubmission(UsernameTxt.Text, PasswordTxt.Password, currentViewingDate, gui);
             Close();
         }
 
+        private void PasswordTxt_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) // pressing Enter should be equivalent to clicking the button
+            {
+                TimeSubmission.StartSubmission(UsernameTxt.Text, PasswordTxt.Password, currentViewingDate, gui);
+                Close();
+            }
+        }
     }
 }

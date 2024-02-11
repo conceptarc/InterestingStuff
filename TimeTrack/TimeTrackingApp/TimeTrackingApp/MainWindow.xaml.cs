@@ -481,11 +481,20 @@ namespace TimeTrackingApp
             }
             else
             {
-                MessageBox.Show("There are no entries to fill out for today!", "No entries found");
+                //MessageBox.Show("There are no entries to fill out for today!", "No entries found");
                 return;
             }
-            LoginWindow loginWindow = new LoginWindow(currentViewingDate, !(bool)GUISelect.IsChecked);
-            loginWindow.Show();
+
+            if (TimeSubmission.HasCachedCredentials())
+            {
+                TimeSubmission.StartSubmission(null, null, currentViewingDate, GUISelect.IsChecked.Value);
+
+            }
+            else
+            {
+                LoginWindow loginWindow = new LoginWindow(currentViewingDate, GUISelect.IsChecked.Value);
+                loginWindow.Show();
+            }
         }
     }
 }
