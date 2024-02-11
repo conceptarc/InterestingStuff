@@ -99,7 +99,7 @@ namespace TimeTrackingApp
             TableGrid.MinRowHeight = 50;
 
             viewCollection = new ObservableCollection<TimeEntryView>();
-            CurrentTimeEntries = LoadTimeEntries();
+            CurrentTimeEntries = SharedCommon.LoadTimeEntries(currentViewingDate);
             entryByIds = new Dictionary<int, TimeEntry>();
 
             RefreshViewCollection();
@@ -258,42 +258,12 @@ namespace TimeTrackingApp
             });
         }
 
-        private string GetFileName()
-        {
-            // No database for now; we will just store data into a text file (1 file per day)
-            string suffix = currentViewingDate.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-            string fileName = $"TimeData_{suffix}.dat";
-
-            return fileName;
-        }
-
-        private List<TimeEntry> LoadTimeEntries()
-        {
-            // No database for now; we will just store data into a text file (1 file per day)
-            string fileName = GetFileName();
-
-            if (!File.Exists(fileName))
-                return new List<TimeEntry>();
-
-            try
-            {
-                string fileJson = File.ReadAllText(fileName);
-                var entries = JsonConvert.DeserializeObject<List<TimeEntry>>(fileJson);
-
-                return entries ?? new List<TimeEntry>();
-            }
-            catch
-            {
-                return new List<TimeEntry>();
-            }
-        }
-
         private void SaveTimeEntries(List<TimeEntry> timeEntries)
         {
             if (!timeEntries.Any())
                 return; // don't create a bunch of empty files (esp. when navigating dates)
 
-            string fileName = GetFileName();
+            string fileName = SharedCommon.GetFileName(currentViewingDate);
             string jsonData = JsonConvert.SerializeObject(timeEntries);
 
             try
@@ -475,7 +445,7 @@ namespace TimeTrackingApp
         {
             SaveImmediately();
             currentViewingDate = currentViewingDate.AddDays(-1);
-            CurrentTimeEntries = LoadTimeEntries();
+            CurrentTimeEntries = SharedCommon.LoadTimeEntries(currentViewingDate);
             UpdateViewingDate();
         }
 
@@ -483,7 +453,7 @@ namespace TimeTrackingApp
         {
             SaveImmediately();
             currentViewingDate = currentViewingDate.AddDays(1);
-            CurrentTimeEntries = LoadTimeEntries();
+            CurrentTimeEntries = SharedCommon.LoadTimeEntries(currentViewingDate);
             UpdateViewingDate();
         }
 
@@ -491,8 +461,31 @@ namespace TimeTrackingApp
         {
             SaveImmediately();
             currentViewingDate = DateTime.Now;
-            CurrentTimeEntries = LoadTimeEntries();
+            CurrentTimeEntries = SharedCommon.LoadTimeEntries(currentViewingDate);
             UpdateViewingDate();
+        }
+
+        private void SubmitToday_Click(object sender, RoutedEventArgs e)
+        {
+            // check if there are any entries to fill for today 
+            var timeEntries = SharedCommon.LoadTimeEntries(currentViewingDate);
+            if (timeEntries.Count > 0)
+            {
+                // check if there are any entries with active timer
+                if (timeEntries.Any(m => m.IsActive))
+                {
+                    MessageBox.Show("Please stop the timer and try again!", "Timer active");
+                    return;
+                }
+                    
+            }
+            else
+            {
+                MessageBox.Show("There are no entries to fill out for today!", "No entries found");
+                return;
+            }
+            LoginWindow loginWindow = new LoginWindow(currentViewingDate, !(bool)GUISelect.IsChecked);
+            loginWindow.Show();
         }
     }
 }

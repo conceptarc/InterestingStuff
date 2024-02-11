@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTrackingApp"
         mc:Ignorable="d"
-        Title="Time Manager Main Window" Height="532" Width="800"
+        Title="Time Manager Main Window" Height="532" Width="850"
         Closing="Window_Closing" KeyUp="WindowScreen_KeyUp">
     <Grid>
         <Grid.Background>
@@ -21,14 +21,16 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <DataGrid x:Name="TableGrid" HorizontalAlignment="Stretch" Height="auto" Width="auto" Margin="10,39,9.6,38.4" VerticalAlignment="Stretch" SelectionChanged="TableGrid_SelectionChanged" MouseDown="TableGrid_MouseDown" FontSize="14" FontFamily="Open Sans" Background="#FFE7E7E7" RowBackground="White"/>
-        <Button x:Name="NewEntry" Content="New (N)" Margin="11,0,0,5.4" FontSize="14" Click="NewEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="142" Height="28" VerticalAlignment="Bottom"/>
-        <Button x:Name="ToggleTimer" Content="Start/Stop (S)" Margin="217,0,0,5.4" FontSize="14" Click="ToggleTimer_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
-        <Button x:Name="EditEntry" Content="Edit (E)" Margin="426,0,0,5.4" FontSize="14" Click="EditEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
+        <Button x:Name="NewEntry" Content="New (N)" Margin="10,0,0,5" FontSize="14" Click="NewEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="142" Height="28" VerticalAlignment="Bottom"/>
+        <Button x:Name="ToggleTimer" Content="Start/Stop (S)" Margin="157,0,0,5" FontSize="14" Click="ToggleTimer_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
+        <Button x:Name="EditEntry" Content="Edit (E)" Margin="310,0,0,5" FontSize="14" Click="EditEntry_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
         <TextBox x:Name="CurrentDateTime" Height="24" Margin="39,10,219.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True"/>
-        <Label Content="Last updated: 2019-04-17" Margin="0,0,9.6,5.4" FontSize="10" Height="24" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="123"/>
+        <Label Content="Last updated: 2024-01-04" Margin="0,0,9.6,5.4" FontSize="10" Height="24" VerticalAlignment="Bottom" HorizontalAlignment="Right" Width="123"/>
         <TextBox x:Name="TotalHours" Height="24" Margin="0,10,9.6,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" IsReadOnly="True" HorizontalAlignment="Right" Width="140"/>
         <Button x:Name="PrevDay" Content="&lt;" HorizontalAlignment="Left" Height="24" Margin="10,10,0,0" VerticalAlignment="Top" Width="24" Click="PrevDay_Click"/>
         <Button x:Name="NextDay" Content="&gt;" Height="24" Margin="0,10,162.6,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="24" Click="NextDay_Click"/>
         <Button x:Name="ReturnToNow" Content="||||" Height="24" Margin="0,10,190.6,0" VerticalAlignment="Top" HorizontalAlignment="Right" Width="24" Click="ReturnToNow_Click"/>
+        <Button x:Name="SubmitToday" Content="Submit Today" Margin="463,0,0,5" FontSize="14" Click="SubmitToday_Click" Foreground="#FF525252" BorderBrush="White" Background="#FFEDEDED" FontWeight="Bold" HorizontalAlignment="Left" Width="148" Height="28" VerticalAlignment="Bottom"/>
+        <CheckBox x:Name="GUISelect" Content="GUI" HorizontalAlignment="Left" Margin="620,0,0,11" VerticalAlignment="Bottom"/>
     </Grid>
 </Window>
