@@ -11,6 +11,6 @@
             <ColumnDefinition Width="21*"/>
             <ColumnDefinition Width="779*"/>
         </Grid.ColumnDefinitions>
-        <Label x:Name="Logger" Grid.ColumnSpan="2"/>
+        <TextBox x:Name="Logger" Grid.ColumnSpan="2"/>
     </Grid>
 </Window>

@@ -26,7 +26,7 @@ namespace TimeTrackingApp
 
         public void SetText(string text)
         {
-            Logger.Content += text;
+            Logger.Text += text;
         }
     }
 }
