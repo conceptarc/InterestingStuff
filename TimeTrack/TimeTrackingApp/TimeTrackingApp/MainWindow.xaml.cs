@@ -260,10 +260,11 @@ namespace TimeTrackingApp
 
         private void SaveTimeEntries(List<TimeEntry> timeEntries)
         {
-            if (!timeEntries.Any())
+            string fileName = SharedCommon.GetFileName(currentViewingDate);
+
+            if (!timeEntries.Any() && !File.Exists(fileName))
                 return; // don't create a bunch of empty files (esp. when navigating dates)
 
-            string fileName = SharedCommon.GetFileName(currentViewingDate);
             string jsonData = JsonConvert.SerializeObject(timeEntries);
 
             try
