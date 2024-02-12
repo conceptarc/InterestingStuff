@@ -36,6 +36,7 @@ namespace TimeTrackingApp
             LogWindow logWindow = new LogWindow();
 
             logWindow.Show();
+            logWindow.SetText(DateTime.Now + "\n"); // useful when comparing multiple log windows
             logWindow.SetText("Timesheet Log: " + date.ToString("dddd, dd MMMM yyyy") + "\n\n");
 
             // browser configs
