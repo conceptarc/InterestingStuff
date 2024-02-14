@@ -170,7 +170,7 @@ namespace TimeTrackingApp
 
                         var selectedJiraLabel = await page.EvaluateFunctionAsync<string>("e => e.textContent", element);
 
-                        if (selectedJiraLabel != $"{timeEntry.Name}:")
+                        if (selectedJiraLabel != $"{timeEntry.Name?.ToUpper()}:")
                         {
                             throw new Exception();
                         }
@@ -208,7 +208,7 @@ namespace TimeTrackingApp
                     await page.ClickAsync("input[id=timeSpentSeconds]"); // click to focus
                     await page.TypeAsync("input[id=timeSpentSeconds]", timeEntry.DurationHours.ToString());
 
-                    if (timeEntry.Name.Substring(0, 3) != "INT" && timeEntry.Name.Substring(0, 3) != "int")
+                    if (timeEntry.Name.ToUpper().Substring(0, 3) != "INT")
                     {
                         await page.WaitForTimeoutAsync(100);
                         await page.WaitForSelectorAsync("input[id=timeSpentSeconds]");
